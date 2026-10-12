@@ -6,8 +6,8 @@ description: >-
   description, and data files/tables. Use this whenever the user wants to
   review, audit, quality-check, curate, or assess a DaRUS/Dataverse dataset;
   check whether a dataset's metadata is complete; verify that a description
-  matches its files or tabular columns; evaluate EngMeta / discipline metadata
-  for computational-science and engineering data; check whether a dataset that
+  matches its files or tabular columns; check whether it is clear what a dataset
+  contains and which software produced it; check whether a dataset that
   ships code is reproducible (dependencies declared, run instructions given); or
   judge whether a dataset meets University of Stuttgart / SimTech / FoKUS RDM and
   FAIR best practices — even if they don't say the word "review". Requires the
@@ -39,14 +39,12 @@ where the metadata gives you something to check against.
    `doi:10.18419/darus-XXXX`), use it directly. Otherwise `Search_Dataverse`
    to find it and confirm the match with the user before reviewing.
 
-3. **Pull the full metadata.** `Get_Dataset_Metadata` for the complete record
-   (citation block + any discipline blocks like EngMeta, process, enzymeML). This
-   is the backbone — most criteria are checked here. Read the description text
-   carefully; you'll cross-reference it against files and schemas later.
+3. **Pull the full metadata.** `Get_Dataset_Metadata` for the complete record.
+   Read the description text carefully; you'll cross-reference it against files
+   and schemas later.
 
-4. **List the files.** `List_Files_in_Dataset`. Note file roles/tags,
-   per-file descriptions, directory structure, formats, and whether a README or
-   documentation file exists.
+4. **List the files.** `List_Files_in_Dataset`. Note formats and whether a
+   README or documentation file exists.
 
 5. **Inspect tabular data where it matters.** For each tabular file relevant to
    the review, `Get_Tabular_File_Schema` for columns/types, and
@@ -58,7 +56,7 @@ where the metadata gives you something to check against.
    exists.
 
 7. **If the dataset ships code, read it.** `Read_File_Content` on the dependency
-   and instruction files so section 7 can be scored.
+   and instruction files so M5, M7 and S4 can be checked.
 
 8. **Cross-check and score.** Run every criterion whose inputs exist. The rows
    whose Evidence column contains `↔` are cross-tool checks; they are what
@@ -70,23 +68,34 @@ description" check does.
 
 ## Reporting the review
 
-Default to a **TLDR nobody has to scroll.** Lead with the verdict; below it list
-only what's wrong. Never enumerate what passed — a roll-call of ✅ is the bloat
-that makes people skip the review and go read the data themselves.
+One report, complete on its own: researchers may read it once on a web page
+with no chance to ask back. **Must fix and Should fix together: at most ~150
+words**, one example per line, not a list ("Not checked" and "Solid" don't count
+toward it). Plain and factual: no praise,
+no softening ("great work, just a few things"), no list of what passed.
 
 ```
 # <dataset title> (<DOI>)
-**Verdict:** <publishable? — N blocking, M minor>
+**Verdict:** <Ready | Not ready>: <the main reason, one sentence>
 
-❌ <criterion> — <field/file/column> — <what's wrong → the fix>
-⚠️ <criterion> — <field/file> — <fix>
+**Must fix**
+- <problem>: <field/file/column>. <the fix>
+
+**Should fix**
+- <problem>: <field/file>. <the fix>
+
+**Not checked:** <what, and why>
+**Solid:** <one factual line>
 ```
 
-- Blocking (❌) first, then minor (⚠️), one line each. No passes. No per-dimension roll-call.
-- Nothing blocks? Say so in the verdict, then list at most the top 3 minor items.
-- Don't dump detail — offer it. End with: *"Say 'full breakdown' for per-dimension scoring."* Expand only if asked.
+- **Must fix:** every section-1 violation, most severe first. Omit the heading if there are none.
+- **Should fix:** at most 3 section-2 items, the ones that matter most for reuse. Omit if none.
+- **Not checked:** only when a tool couldn't read something a criterion needs (section 4).
+- **Solid:** only when something stands out that a reader can rely on (e.g. "README
+  defines every column with units"). A fact, not a compliment. Usually omitted.
+- No criterion numbers, no section names, no follow-up offer. Never report what
+  section 3 excludes.
 
-Grounding (unchanged): every line names the field/file/column it rests on
-("Description states no method; violates 2.1", not "description is vague"); mark
-blocking vs cosmetic per the criteria's section 1 gate; obey the criteria's own
-N/A and confidence rules (sections 3, 7, 9).
+Grounding: every line names the field, file or column it rests on
+("Description says how samples were taken but not which compounds were measured",
+not "description is vague").
