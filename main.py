@@ -40,10 +40,13 @@ load_dotenv()
 # Load the API token from the environment variable.
 api_token = os.environ.get("API_TOKEN")
 
-# Initialize connection to the DaRUS Dataverse instance
-# DaRUS is the institutional data repository of the University of Stuttgart
+# Dataverse instance to talk to; defaults to DaRUS, the institutional data
+# repository of the University of Stuttgart. The trailing "/" is required:
+# pyDataverse joins paths with urljoin, which drops the last path segment of a
+# base like http://host/dv/<job_id> unless it ends in "/".
 darus = Dataverse(
-    base_url="https://darus.uni-stuttgart.de",
+    base_url=os.environ.get("DATAVERSE_URL", "https://darus.uni-stuttgart.de").rstrip("/")
+    + "/",
     api_token=api_token,
     verbose=0,
 )

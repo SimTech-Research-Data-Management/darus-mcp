@@ -126,6 +126,15 @@ API_TOKEN="<your-darus-api-token>" uv run python main.py
 
 The server starts on `http://0.0.0.0:8000` using `streamable-http` transport.
 
+### Configuration
+
+All variables are optional except where noted; unset means the defaults below.
+
+| Variable | Default | Purpose |
+|---|---|---|
+| `API_TOKEN` | — (required for `python main.py`) | Dataverse API token, sent as `X-Dataverse-key`. |
+| `DATAVERSE_URL` | `https://darus.uni-stuttgart.de` | Dataverse instance to talk to. May include a path (e.g. a proxy at `http://127.0.0.1:9000/dv/<job_id>`); a trailing `/` is added automatically. |
+
 ## Security Notes
 
 - Treat your API token as a secret.

@@ -137,6 +137,47 @@ def test_run_without_token_fails_loud():
     print("[ok] no-token run failed loud")
 
 
+def test_dataverse_url_keeps_path_prefix():
+    """DATAVERSE_URL may carry a path (the bridge's per-job proxy, e.g.
+    http://127.0.0.1:9000/dv/<job_id>). pyDataverse joins with urljoin, which
+    drops the last segment unless the base ends in '/', so every request must
+    still start with the prefix."""
+    import http.server  # noqa: PLC0415
+    import threading  # noqa: PLC0415
+
+    paths = []
+
+    class Stub(http.server.BaseHTTPRequestHandler):
+        def do_GET(self):
+            paths.append(self.path)
+            self.send_response(404)
+            self.end_headers()
+
+        def log_message(self, *args):
+            pass
+
+    srv = http.server.HTTPServer(("127.0.0.1", 0), Stub)
+    threading.Thread(target=srv.serve_forever, daemon=True).start()
+    try:
+        env = {
+            **os.environ,
+            "DATAVERSE_URL": f"http://127.0.0.1:{srv.server_port}/dv/job1",
+        }
+        # Import fails on the stub's 404; only the requested paths matter.
+        subprocess.run(
+            [sys.executable, "-c", "import main"],
+            cwd=HERE,
+            env=env,
+            capture_output=True,
+            timeout=60,
+        )
+    finally:
+        srv.shutdown()
+    assert paths, "no request reached the stub; DATAVERSE_URL ignored?"
+    assert all(p.startswith("/dv/job1/") for p in paths), f"prefix dropped: {paths}"
+    print("[ok] DATAVERSE_URL path prefix kept on every request")
+
+
 def test_install_entry_shape():
     """The generated Claude Desktop entry uses an absolute uv path and the fast,
     self-healing launch command (no --with, no --no-sync)."""
@@ -231,6 +272,7 @@ if __name__ == "__main__":
     test_server_instructions_describe_write_workflow()
     test_vocabulary_sources_configured()
     test_run_without_token_fails_loud()
+    test_dataverse_url_keeps_path_prefix()
     test_install_entry_shape()
     test_install_merge_preserves_other_servers()
     test_install_config_path_per_os()
