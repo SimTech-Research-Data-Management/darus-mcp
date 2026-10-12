@@ -28,10 +28,15 @@ Dependencies:
 
 import os
 import tomllib
+from collections.abc import Sequence
 from pathlib import Path
 
 from dotenv import load_dotenv
 from fastmcp import FastMCP
+from fastmcp.server.transforms import GetToolNext, Transform
+from fastmcp.tools import Tool
+from fastmcp.tools.tool_transform import ArgTransformConfig, ToolTransformConfig
+from fastmcp.utilities.versions import VersionSpec
 from pyDataverse import Dataverse
 from pyDataverse.mcp import DataverseMCP, MCPConfiguration, VocabularySource
 
@@ -78,6 +83,35 @@ DataverseMCP(
         ],
     ),
 ).to_mcp(app)
+
+
+class HideBaseUrl(Transform):
+    """Remove the per-call `base_url` argument pyDataverse puts on its tools.
+
+    With it, any caller (a prompt-injected model included) could point a tool at a
+    host of its choosing and carry data out in that request's URL. This server is
+    bound to one instance, DATAVERSE_URL; hidden, the argument always takes its
+    default, None, which means exactly that instance.
+    """
+
+    _hide = ToolTransformConfig(arguments={"base_url": ArgTransformConfig(hide=True)})
+
+    def _apply(self, tool: Tool) -> Tool:
+        if "base_url" in tool.parameters.get("properties", {}):
+            return self._hide.apply(tool)
+        return tool
+
+    async def list_tools(self, tools: Sequence[Tool]) -> Sequence[Tool]:
+        return [self._apply(t) for t in tools]
+
+    async def get_tool(
+        self, name: str, call_next: GetToolNext, *, version: VersionSpec | None = None
+    ) -> Tool | None:
+        tool = await call_next(name, version=version)
+        return self._apply(tool) if tool is not None else None
+
+
+app.add_transform(HideBaseUrl())
 
 # Optional tool allowlist, e.g. for a read-only review agent. Unset = all tools.
 # Hidden tools are not listed, and calling one fails as "Unknown tool".

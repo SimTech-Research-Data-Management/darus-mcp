@@ -136,6 +136,8 @@ All variables are optional except where noted; unset means the defaults below.
 | `DATAVERSE_URL` | `https://darus.uni-stuttgart.de` | Dataverse instance to talk to. May include a path (e.g. a proxy at `http://127.0.0.1:9000/dv/<job_id>`); a trailing `/` is added automatically. |
 | `MCP_TOOLS` | all tools | Comma-separated allowlist of tool names (see [Tools](#tools)). Other tools are hidden and fail as unknown. Names must match exactly; a misspelt name is silently not exposed. |
 
+Tools always talk to `DATAVERSE_URL`. pyDataverse's per-call `base_url` argument is removed from every tool, so a caller cannot redirect a tool to another host.
+
 ## Security Notes
 
 - Treat your API token as a secret.

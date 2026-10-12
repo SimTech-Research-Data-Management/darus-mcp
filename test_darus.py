@@ -225,6 +225,68 @@ asyncio.run(go())
     print(f"[ok] MCP_TOOLS allowlist: 16 -> {len(out['names'])}, hidden tool unknown")
 
 
+def test_no_tool_takes_base_url():
+    """No caller may choose the host: pyDataverse's per-call base_url is hidden on
+    every tool, so all calls go to DATAVERSE_URL (spec §6 item 3)."""
+    os.environ.pop("API_TOKEN", None)
+    from fastmcp import Client  # noqa: PLC0415
+
+    import main  # noqa: PLC0415
+
+    async def schemas():
+        async with Client(main.app) as client:
+            return {t.name: t.inputSchema for t in await client.list_tools()}
+
+    tools = asyncio.run(schemas())
+    assert len(tools) == 16, f"hiding an argument must not drop tools, got {len(tools)}"
+    leaky = [n for n, s in tools.items() if "base_url" in s.get("properties", {})]
+    assert not leaky, f"tools still take base_url: {leaky}"
+    print("[ok] no tool takes base_url")
+
+
+def test_base_url_cannot_redirect_a_call():
+    """Passing base_url anyway reaches nothing: the request never goes to that host."""
+    import http.server  # noqa: PLC0415
+    import threading  # noqa: PLC0415
+
+    os.environ.pop("API_TOKEN", None)
+    from fastmcp import Client  # noqa: PLC0415
+
+    import main  # noqa: PLC0415
+
+    hits = []
+
+    class Recorder(http.server.BaseHTTPRequestHandler):
+        def do_GET(self):  # noqa: N802
+            hits.append(self.path)
+            self.send_response(404)
+            self.end_headers()
+
+        do_HEAD = do_GET  # noqa: N815
+
+        def log_message(self, *args):
+            pass
+
+    server = http.server.HTTPServer(("127.0.0.1", 0), Recorder)
+    threading.Thread(target=server.serve_forever, daemon=True).start()
+    evil = f"http://127.0.0.1:{server.server_port}/?leak=draft-text"
+
+    async def call():
+        async with Client(main.app) as client:
+            return await client.call_tool(
+                "Get_Dataset_Metadata",
+                {"identifier": "doi:10.18419/darus-0000", "full": False, "base_url": evil},
+                raise_on_error=False,
+            )
+
+    try:
+        asyncio.run(call())
+    finally:
+        server.shutdown()
+    assert not hits, f"a tool call reached the injected host: {hits}"
+    print("[ok] base_url cannot redirect a call")
+
+
 def test_install_entry_shape():
     """The generated Claude Desktop entry uses an absolute uv path and the fast,
     self-healing launch command (no --with, no --no-sync)."""
@@ -321,6 +383,8 @@ if __name__ == "__main__":
     test_run_without_token_fails_loud()
     test_dataverse_url_keeps_path_prefix()
     test_mcp_tools_allowlist()
+    test_no_tool_takes_base_url()
+    test_base_url_cannot_redirect_a_call()
     test_install_entry_shape()
     test_install_merge_preserves_other_servers()
     test_install_config_path_per_os()
