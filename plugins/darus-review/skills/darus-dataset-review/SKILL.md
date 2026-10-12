@@ -19,7 +19,7 @@ description: >-
 ## What this does
 
 Review a DaRUS dataset by pulling its real metadata, files, and tabular schemas
-via `darus-mcp` and checking them against `references/rubric.md`. Every finding
+via `darus-mcp` and checking them against `references/review-criteria.md`. Every finding
 must point at a specific field, file, or column.
 
 ## Prerequisites
@@ -32,7 +32,7 @@ so rather than reviewing from the landing page or memory.
 Work in this order — cheap, broad evidence first, then drill into files only
 where the metadata gives you something to check against.
 
-1. **Load `references/rubric.md`.** It is the authoritative criteria list and
+1. **Load `references/review-criteria.md`.** It is the authoritative criteria list and
    defines what each later step needs to collect and when a section applies.
 
 2. **Locate the dataset.** If the user gave a DOI/PID (e.g.
@@ -70,32 +70,23 @@ description" check does.
 
 ## Reporting the review
 
-Lead with a verdict, then per-dimension findings, then concrete fixes. Use this
-structure:
+Default to a **TLDR nobody has to scroll.** Lead with the verdict; below it list
+only what's wrong. Never enumerate what passed — a roll-call of ✅ is the bloat
+that makes people skip the review and go read the data themselves.
 
 ```
-# Review: <dataset title> (<DOI>)
+# <dataset title> (<DOI>)
+**Verdict:** <publishable? — N blocking, M minor>
 
-**Overall:** <one-line verdict — e.g. "Publishable; 2 blocking, 3 minor issues">
-
-## Findings by dimension
-For each rubric dimension, a short status line and only the notable items:
-- ✅ Pass / ⚠️ Weak / ❌ Fail — <criterion> — <evidence: field/file/column> — <what's wrong>
-
-## Consistency issues
-Failed `↔` criteria, each with the two pieces of evidence that disagree.
-
-## Recommended fixes
-Ordered, concrete, and actionable — what to add/change and where.
+❌ <criterion> — <field/file/column> — <what's wrong → the fix>
+⚠️ <criterion> — <field/file> — <fix>
 ```
 
-Grounding rules that keep the review trustworthy:
+- Blocking (❌) first, then minor (⚠️), one line each. No passes. No per-dimension roll-call.
+- Nothing blocks? Say so in the verdict, then list at most the top 3 minor items.
+- Don't dump detail — offer it. End with: *"Say 'full breakdown' for per-dimension scoring."* Expand only if asked.
 
-- **Cite the evidence.** Every finding names the metadata field, file, or column
-  it's based on. "Description is vague" is useless; "Description (3 sentences)
-  states no method or software; violates rubric 2.1" is a finding.
-- **Distinguish blocking from cosmetic.** Say which, per the rubric's section 1
-  hard gate.
-- **Obey the rubric's own limits** — its applicability and confidence-caveat
-  rules (sections 3, 7, 9) decide what to mark N/A and what not to enforce. Don't
-  restate or override them here.
+Grounding (unchanged): every line names the field/file/column it rests on
+("Description states no method; violates 2.1", not "description is vague"); mark
+blocking vs cosmetic per the criteria's section 1 gate; obey the criteria's own
+N/A and confidence rules (sections 3, 7, 9).

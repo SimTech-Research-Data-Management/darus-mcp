@@ -1,4 +1,4 @@
-# DaRUS Dataset Review Rubric
+# DaRUS Dataset Review Criteria
 
 Criteria for reviewing a single DaRUS/Dataverse record. Each row: what to check,
 what a violation looks like, and which `darus-mcp` tool shows the evidence.

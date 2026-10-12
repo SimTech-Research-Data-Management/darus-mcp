@@ -1,6 +1,6 @@
 # DaRUS Review plugin
 
-Bundles the **`darus-dataset-review` skill** (review workflow + FAIR/quality rubric)
+Bundles the **`darus-dataset-review` skill** (review workflow + FAIR/quality criteria)
 with the **`darus-mcp` server** that gives it live access to DaRUS. One install gets
 you both.
 
@@ -33,7 +33,7 @@ Two things can't be shipped inside a plugin — set them up once:
 
 - **Skill** `darus-dataset-review` — reviews a dataset's metadata, description, and
   files for quality, FAIR compliance, and internal consistency, scored against
-  [`references/rubric.md`](skills/darus-dataset-review/references/rubric.md).
+  [`references/review-criteria.md`](skills/darus-dataset-review/references/review-criteria.md).
 - **MCP server** `darus-mcp` — search DaRUS, read dataset metadata and files, and
   (opt-in) create/edit draft datasets and look up controlled-vocabulary terms.
 

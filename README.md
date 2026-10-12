@@ -140,5 +140,5 @@ The server starts on `http://0.0.0.0:8000` using `streamable-http` transport.
 - `test_darus.py` - runnable checks (`uv run python test_darus.py`)
 - `docs/` - spec and implementation plan for the create-dataset workflow
 - `.claude-plugin/marketplace.json` - marketplace catalog so others can install the plugin
-- `plugins/darus-review/` - the shareable plugin: review skill + rubric + MCP wiring
+- `plugins/darus-review/` - the shareable plugin: review skill + criteria + MCP wiring
 - `pyproject.toml` - project metadata and dependencies
