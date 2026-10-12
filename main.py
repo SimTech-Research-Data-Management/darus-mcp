@@ -79,6 +79,11 @@ DataverseMCP(
     ),
 ).to_mcp(app)
 
+# Optional tool allowlist, e.g. for a read-only review agent. Unset = all tools.
+# Hidden tools are not listed, and calling one fails as "Unknown tool".
+if tools := os.environ.get("MCP_TOOLS"):
+    app.enable(names={name.strip() for name in tools.split(",")}, only=True)
+
 if __name__ == "__main__":
     """
     Main entry point for the DaRUS MCP server.

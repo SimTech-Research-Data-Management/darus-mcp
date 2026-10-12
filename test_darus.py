@@ -178,6 +178,53 @@ def test_dataverse_url_keeps_path_prefix():
     print("[ok] DATAVERSE_URL path prefix kept on every request")
 
 
+REVIEW_TOOLS = [
+    "Get_Dataset_Metadata",
+    "List_Files_in_Dataset",
+    "Read_File_Content",
+    "Read_Tabular_File",
+    "Get_Tabular_File_Schema",
+]
+
+
+def test_mcp_tools_allowlist():
+    """With MCP_TOOLS set, exactly those tools are served (16 -> 5) and a hidden
+    tool fails as unknown rather than running. Runs in a subprocess because
+    `main` is already imported above with every tool enabled."""
+    script = """
+import asyncio, json, main
+from fastmcp import Client
+
+async def go():
+    async with Client(main.app) as c:
+        names = sorted(t.name for t in await c.list_tools())
+        try:
+            await c.call_tool("Create_Dataset", {})
+            hidden = "ran"
+        except Exception as e:
+            hidden = str(e)
+    print(json.dumps({"names": names, "hidden": hidden}))
+
+asyncio.run(go())
+"""
+    env = {**os.environ, "MCP_TOOLS": ", ".join(REVIEW_TOOLS)}
+    env.pop("API_TOKEN", None)
+    env.pop("DATAVERSE_URL", None)
+    proc = subprocess.run(
+        [sys.executable, "-c", script],
+        cwd=HERE,
+        env=env,
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert proc.returncode == 0, proc.stderr
+    out = json.loads(proc.stdout.strip().splitlines()[-1])
+    assert out["names"] == sorted(REVIEW_TOOLS), f"served: {out['names']}"
+    assert "Unknown tool" in out["hidden"], f"hidden tool not refused: {out['hidden']}"
+    print(f"[ok] MCP_TOOLS allowlist: 16 -> {len(out['names'])}, hidden tool unknown")
+
+
 def test_install_entry_shape():
     """The generated Claude Desktop entry uses an absolute uv path and the fast,
     self-healing launch command (no --with, no --no-sync)."""
@@ -273,6 +320,7 @@ if __name__ == "__main__":
     test_vocabulary_sources_configured()
     test_run_without_token_fails_loud()
     test_dataverse_url_keeps_path_prefix()
+    test_mcp_tools_allowlist()
     test_install_entry_shape()
     test_install_merge_preserves_other_servers()
     test_install_config_path_per_os()
