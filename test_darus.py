@@ -247,6 +247,36 @@ def test_no_tool_takes_base_url():
     print("[ok] no tool takes base_url")
 
 
+def test_review_tool_arguments():
+    """Pin the review tools' argument names. Every base_url safeguard keys on that
+    literal name and pyDataverse comes from a git branch, so a rename or a new host
+    argument would silently reopen the channel."""
+    os.environ.pop("API_TOKEN", None)
+    from fastmcp import Client  # noqa: PLC0415
+
+    import main  # noqa: PLC0415
+
+    expected = {
+        "Get_Dataset_Metadata": {"full", "identifier"},
+        "List_Files_in_Dataset": {"filter_mime_types", "identifier", "only_tabular"},
+        "Read_Tabular_File": {"identifier", "n_rows", "path", "read_kwargs", "summarize"},
+        "Read_File_Content": {"identifier", "path"},
+        "Get_Tabular_File_Schema": {"identifier", "path"},
+    }
+
+    async def schemas():
+        async with Client(main.app) as client:
+            return {t.name: t.inputSchema for t in await client.list_tools()}
+
+    tools = asyncio.run(schemas())
+    got = {n: set(tools[n].get("properties", {})) for n in expected}
+    assert got == expected, (
+        "review tool arguments changed: a human must check for new host/URL "
+        f"arguments (base_url safeguards key on the literal name). got {got}"
+    )
+    print("[ok] review tool arguments pinned")
+
+
 def test_base_url_cannot_redirect_a_call():
     """Passing base_url anyway reaches nothing: the request never goes to that host."""
     import http.server  # noqa: PLC0415
@@ -387,6 +417,7 @@ if __name__ == "__main__":
     test_dataverse_url_keeps_path_prefix()
     test_mcp_tools_allowlist()
     test_no_tool_takes_base_url()
+    test_review_tool_arguments()
     test_base_url_cannot_redirect_a_call()
     test_install_entry_shape()
     test_install_merge_preserves_other_servers()

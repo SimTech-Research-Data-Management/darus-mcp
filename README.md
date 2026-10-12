@@ -138,6 +138,8 @@ All variables are optional except where noted; unset means the defaults below.
 
 Tools always talk to `DATAVERSE_URL`. pyDataverse's per-call `base_url` argument is removed from every tool, so a caller cannot redirect a tool to another host.
 
+The cost: `Search_DataCite` finds datasets on other Dataverse installations and returns a `base_url` for each hit. Those hits can no longer be opened through this server's tools; that takes another server instance with its own `DATAVERSE_URL`.
+
 ## Security Notes
 
 - Treat your API token as a secret.
