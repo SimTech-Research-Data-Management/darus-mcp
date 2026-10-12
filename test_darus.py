@@ -235,12 +235,15 @@ def test_no_tool_takes_base_url():
 
     async def schemas():
         async with Client(main.app) as client:
-            return {t.name: t.inputSchema for t in await client.list_tools()}
+            return {t.name: t for t in await client.list_tools()}
 
-    tools = asyncio.run(schemas())
+    served = asyncio.run(schemas())
+    tools = {n: t.inputSchema for n, t in served.items()}
     assert len(tools) == 16, f"hiding an argument must not drop tools, got {len(tools)}"
     leaky = [n for n, s in tools.items() if "base_url" in s.get("properties", {})]
     assert not leaky, f"tools still take base_url: {leaky}"
+    told = [n for n, t in served.items() if "base_url" in (t.description or "")]
+    assert not told, f"tool descriptions still mention base_url: {told}"
     print("[ok] no tool takes base_url")
 
 

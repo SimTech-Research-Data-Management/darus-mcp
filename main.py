@@ -27,6 +27,7 @@ Dependencies:
 """
 
 import os
+import re
 import tomllib
 from collections.abc import Sequence
 from pathlib import Path
@@ -96,9 +97,18 @@ class HideBaseUrl(Transform):
 
     _hide = ToolTransformConfig(arguments={"base_url": ArgTransformConfig(hide=True)})
 
+    # pyDataverse ends every description with "Provide the `base_url` parameter if you
+    # want to use a different dataverse." (even on tools without the argument).
+    # Drop any sentence that names it, so nothing tells the model to use it.
+    _sentence = re.compile(r"\s*[^.\n]*base_url[^.\n]*\.")
+
     def _apply(self, tool: Tool) -> Tool:
         if "base_url" in tool.parameters.get("properties", {}):
-            return self._hide.apply(tool)
+            tool = self._hide.apply(tool)
+        if tool.description and "base_url" in tool.description:
+            tool = tool.model_copy(
+                update={"description": self._sentence.sub("", tool.description).rstrip()}
+            )
         return tool
 
     async def list_tools(self, tools: Sequence[Tool]) -> Sequence[Tool]:
