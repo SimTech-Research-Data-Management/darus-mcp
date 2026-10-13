@@ -75,7 +75,9 @@ toward it). Plain and factual: no praise,
 no softening ("great work, just a few things"), no list of what passed.
 
 ```
-# <dataset title> (<DOI>)
+# <dataset title>
+<DOI>
+
 **Verdict:** <Ready | Not ready>: <the main reason, one sentence>
 
 **Must fix**
