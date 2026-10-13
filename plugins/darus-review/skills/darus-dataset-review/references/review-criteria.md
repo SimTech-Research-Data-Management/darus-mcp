@@ -6,29 +6,29 @@ deposited?** Each row says what to check, what a violation looks like, and which
 `darus-mcp` tool shows the evidence.
 
 ## Contents
-1. Must fix (blocking)
-2. Should fix
-3. Not reviewed
+1. Required changes (blocking)
+2. Recommended changes
+3. Out of scope
 4. Applicability and unreadable evidence
 5. Sources
 
 ---
 
-## 1. Must fix (blocking)
+## 1. Required changes (blocking)
 
-Any violation here means the dataset is **not ready**.
+Any violation here means the verdict is **Changes needed**.
 
 | # | Criterion | Violation looks like | Evidence |
 |---|-----------|----------------------|----------|
 | M1 | Every author has an ORCID | An author has no identifier, or only a non-ORCID one (GND, Scopus, …) | `Get_Dataset_Metadata` → author identifier |
 | M2 | It is clear what the dataset contains: what was measured, simulated or collected, how, and its scope (samples, cases, variables) | Description gives method or context but not what the data actually is; a reader can't tell what they'd get | `Get_Dataset_Metadata` → dsDescription, plus README if one exists |
 | M3 | Every column in tabular data has a definition and a unit, and missing-data codes are explained | Column `v2` or `Qbreak` defined nowhere; numeric columns with no units; `-999`/`<LOQ`/empty columns unexplained | `Get_Tabular_File_Schema` + sampled `Read_Tabular_File` ↔ description, README, per-file descriptions (any one counts) |
-| M4 | A README or the description says what each file or folder is, and every data, code or documentation file it points readers to exists | Files nobody explains; README links to data or scripts that aren't deposited. Housekeeping files (`.gitignore`, editor configs, a misnamed dotfile) are never Must fix | `List_Files_in_Dataset` ↔ description / `Read_File_Content` on README |
+| M4 | A README or the description says what each file or folder is, and every data, code or documentation file it points readers to exists | Files nobody explains; README links to data or scripts that aren't deposited. Housekeeping files (`.gitignore`, editor configs, a misnamed dotfile) are never a required change | `List_Files_in_Dataset` ↔ description / `Read_File_Content` on README |
 | M5 | Software used to produce or analyse the data is named **with versions**; shipped code states its language/runtime version | "Analysed with Python" or "LC-MS/MS" with no software or version; no Python/R/Node version anywhere | description / README / manifest |
 | M6 | The dataset has a license (Dataverse license or custom terms) | License field empty, even if a LICENSE file sits inside the files | `Get_Dataset_Metadata` → license / termsOfUse |
 | M7 | Shipped code can be run: dependencies declared in a manifest, and run instructions name the entry point and match the deposited layout | Scripts import packages no manifest declares; no "how to run"; instructions assume folders or files the deposit doesn't have | `List_Files_in_Dataset` + `Read_File_Content` on README, manifest, entry script |
 
-## 2. Should fix
+## 2. Recommended changes
 
 Report at most the three that matter most for reuse.
 
@@ -41,7 +41,7 @@ Report at most the three that matter most for reuse.
 | S5 | Funding documented for publicly funded work | Funder named, no grant number | `Get_Dataset_Metadata` → grantNumber |
 | S6 | Related publication is linked by DOI or URL | Citation text only, nothing a machine can follow | `Get_Dataset_Metadata` → publication |
 
-## 3. Not reviewed
+## 3. Out of scope
 
 Out of scope for this review; never report these:
 
@@ -57,11 +57,11 @@ Out of scope for this review; never report these:
   (`.py`, `.R`, `.jl`, `.m`, `.ipynb`, `.sh`, `.c/.cpp`, `.f90`, …). Otherwise skip
   them silently.
 - If a tool can't read something (format, encoding, archive), the criterion is
-  **not checked**: neither passed nor failed. Say so in the report's "Not checked"
+  **not reviewed**: neither passed nor failed. Say so in the report's "Not reviewed"
   line.
 - State facts the deposit itself gives that bear on reuse even if no row covers
-  them (e.g. "the authors state the code was never run"), as a Must or Should fix
-  line when they need action.
+  them (e.g. "the authors state the code was never run"), as a required or recommended
+  change when they need action.
 
 ## 5. Sources
 

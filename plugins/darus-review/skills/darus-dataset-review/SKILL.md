@@ -69,31 +69,39 @@ description" check does.
 ## Reporting the review
 
 One report, complete on its own: researchers may read it once on a web page
-with no chance to ask back. **Must fix and Should fix together: at most ~150
-words**, one example per line, not a list ("Not checked" and "Solid" don't count
-toward it). Plain and factual: no praise,
-no softening ("great work, just a few things"), no list of what passed.
+with no chance to ask back. **Required and recommended changes together: at most
+~150 words**, one example per line, not a list ("Not reviewed" and "Done well" don't
+count toward it). Plain and factual: no praise, no softening ("great work, just a
+few things"), no list of what passed.
+
+**Write for the researcher, not for a curator.** Name places the way the DaRUS edit
+form shows them ("License, Terms tab", "Description", "Author identifier"), never
+internal field names like `dsDescription` or `termsOfUse`. No words a researcher
+wouldn't use: fixture, MIME type, ingest, schema, metadata block, PID. File names,
+column names and values go in backticks; they are the researcher's own words.
 
 ```
 # <dataset title>
 <DOI>
 
-**Verdict:** <Ready | Not ready>: <the main reason, one sentence>
+**<Ready to submit | Changes needed>:** <the main reason, one sentence>
 
-**Must fix**
-- <problem>: <field/file/column>. <the fix>
+**Required changes**
+- <problem>: <form field, file or column>. <the fix>
 
-**Should fix**
-- <problem>: <field/file>. <the fix>
+**Recommended changes**
+- <problem>: <form field, file or column>. <the fix>
 
-**Not checked:** <what, and why>
-**Solid:** <one factual line>
+**Not reviewed:** <what, and why>
+
+**Done well:** <one factual line>
 ```
 
-- **Must fix:** every section-1 violation, most severe first. Omit the heading if there are none.
-- **Should fix:** at most 3 section-2 items, the ones that matter most for reuse. Omit if none.
-- **Not checked:** only when a tool couldn't read something a criterion needs (section 4).
-- **Solid:** only when something stands out that a reader can rely on (e.g. "README
+- **Ready to submit** when no section-1 criterion is violated; otherwise **Changes needed**.
+- **Required changes:** every section-1 violation, most severe first. Omit the heading if there are none.
+- **Recommended changes:** at most 3 section-2 items, the ones that matter most for reuse. Omit if none.
+- **Not reviewed:** only when a tool couldn't read something a criterion needs (section 4).
+- **Done well:** only when something stands out that a reader can rely on (e.g. "README
   defines every column with units"). A fact, not a compliment. Usually omitted.
 - No criterion numbers, no section names, no follow-up offer. Never report what
   section 3 excludes.
