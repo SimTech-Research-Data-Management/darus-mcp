@@ -70,9 +70,10 @@ description" check does.
 
 One report, complete on its own: researchers may read it once on a web page
 with no chance to ask back. **Required and recommended changes together: at most
-~150 words**, one example per line, not a list ("Not reviewed" and "Done well" don't
-count toward it). Plain and factual: no praise, no softening ("great work, just a
-few things"), no list of what passed.
+~150 words**, one example per line, not a list ("Not reviewed" doesn't count toward
+it). Plain and factual: no praise, no softening ("great work, just a
+few things"), no list of what passed, no section for what is good: "Ready to submit" is the
+positive feedback.
 
 **Write for the researcher, not for a curator.** Name places the way the DaRUS edit
 form shows them ("License, Terms tab", "Description", "Author identifier"), never
@@ -96,9 +97,6 @@ column names and values go in backticks; they are the researcher's own words.
 
 ## Not reviewed
 - <file>: <why, in a few words>
-
-## Done well
-- <one fact a reader can rely on>
 ```
 
 - **The verdict line is fixed wording**, exactly one of the two lines above. Never a
@@ -109,9 +107,7 @@ column names and values go in backticks; they are the researcher's own words.
 - **Recommended changes:** at most 3 section-2 items, the ones that matter most for reuse. Omit if none.
 - **Not reviewed:** one line per file a tool couldn't read when a criterion needs it
   (section 4), e.g. "`a.txt`: restricted by you". Omit if none.
-- **Done well:** only when something stands out that a reader can rely on (e.g. "`README.md`
-  defines every column with its unit"). A fact, not a compliment. Usually omitted.
-- The four `##` headings above are the only headings, spelled exactly so. No criterion
+- The three `##` headings above are the only headings, spelled exactly so. No criterion
   numbers, no criteria section names, no follow-up offer. Never report what section 3
   excludes.
 
