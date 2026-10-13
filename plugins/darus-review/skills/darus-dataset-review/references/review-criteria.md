@@ -57,8 +57,8 @@ Out of scope for this review; never report these:
   (`.py`, `.R`, `.jl`, `.m`, `.ipynb`, `.sh`, `.c/.cpp`, `.f90`, …). Otherwise skip
   them silently.
 - If a tool can't read something (format, encoding, archive), the criterion is
-  **not reviewed**: neither passed nor failed. Say so in the report's "Not reviewed"
-  line.
+  **not reviewed**: neither passed nor failed. List it under the report's
+  "Not reviewed" heading.
 - State facts the deposit itself gives that bear on reuse even if no row covers
   them (e.g. "the authors state the code was never run"), as a required or recommended
   change when they need action.

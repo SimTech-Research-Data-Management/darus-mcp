@@ -84,27 +84,36 @@ column names and values go in backticks; they are the researcher's own words.
 # <dataset title>
 <DOI>
 
-**<Ready to submit | Changes needed>:** <the main reason, one sentence>
+**Ready to submit:** nothing blocks reuse.
+  or
+**Changes needed:** <n> required change(s) before others can reuse this.
 
-**Required changes**
+## Required changes
 - <problem>: <form field, file or column>. <the fix>
 
-**Recommended changes**
+## Recommended changes
 - <problem>: <form field, file or column>. <the fix>
 
-**Not reviewed:** <what, and why>
+## Not reviewed
+- <file>: <why, in a few words>
 
-**Done well:** <one factual line>
+## Done well
+- <one fact a reader can rely on>
 ```
 
-- **Ready to submit** when no section-1 criterion is violated; otherwise **Changes needed**.
+- **The verdict line is fixed wording**, exactly one of the two lines above. Never a
+  justification: the lists say why.
+- **Ready to submit** when no section-1 criterion is violated; otherwise **Changes needed**
+  with the number of required changes.
 - **Required changes:** every section-1 violation, most severe first. Omit the heading if there are none.
 - **Recommended changes:** at most 3 section-2 items, the ones that matter most for reuse. Omit if none.
-- **Not reviewed:** only when a tool couldn't read something a criterion needs (section 4).
-- **Done well:** only when something stands out that a reader can rely on (e.g. "README
-  defines every column with units"). A fact, not a compliment. Usually omitted.
-- No criterion numbers, no section names, no follow-up offer. Never report what
-  section 3 excludes.
+- **Not reviewed:** one line per file a tool couldn't read when a criterion needs it
+  (section 4), e.g. "`a.txt`: restricted by you". Omit if none.
+- **Done well:** only when something stands out that a reader can rely on (e.g. "`README.md`
+  defines every column with its unit"). A fact, not a compliment. Usually omitted.
+- The four `##` headings above are the only headings, spelled exactly so. No criterion
+  numbers, no criteria section names, no follow-up offer. Never report what section 3
+  excludes.
 
 Grounding: every line names the field, file or column it rests on
 ("Description says how samples were taken but not which compounds were measured",
