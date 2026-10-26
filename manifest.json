@@ -17,7 +17,14 @@
     "entry_point": "main.py",
     "mcp_config": {
       "command": "uv",
-      "args": ["run", "--directory", "${__dirname}", "fastmcp", "run", "main.py"],
+      "args": [
+        "run",
+        "--directory",
+        "${__dirname}",
+        "fastmcp",
+        "run",
+        "main.py"
+      ],
       "env": {
         "API_TOKEN": "${user_config.api_token}",
         "ALLOW_WRITE": "${user_config.allow_write}"
@@ -28,9 +35,9 @@
     "api_token": {
       "type": "string",
       "title": "DaRUS API token",
-      "description": "In DaRUS, open the menu under your name and choose API Token. Needed to access unpublished and restricted datasets.",
+      "description": "Optional. Without it Claude sees only published datasets. In DaRUS, open the menu under your name and choose API Token.",
       "sensitive": true,
-      "required": true
+      "required": false
     },
     "allow_write": {
       "type": "boolean",
@@ -40,10 +47,18 @@
     }
   },
   "compatibility": {
-    "platforms": ["darwin", "win32"],
+    "platforms": [
+      "darwin",
+      "win32"
+    ],
     "runtimes": {
       "python": ">=3.12"
     }
   },
-  "keywords": ["darus", "dataverse", "research-data", "fair"]
+  "keywords": [
+    "darus",
+    "dataverse",
+    "research-data",
+    "fair"
+  ]
 }

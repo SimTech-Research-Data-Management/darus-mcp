@@ -10,13 +10,14 @@ allow it, create and edit draft datasets.
 
 Log in to [DaRUS](https://darus.uni-stuttgart.de), open the menu under your name and choose **API Token**. Copy the token.
 It lets Claude see your unpublished and restricted datasets; keep it private.
+Only reviewing published datasets? You can skip this and leave the token empty.
 
 ### 2a. Claude Desktop
 
 1. Download [`darus-mcp.mcpb`](https://github.com/SimTech-Research-Data-Management/darus-review-mcp/releases/latest/download/darus-mcp.mcpb).
 2. Double-click it (or drag it into Claude Desktop) and click **Install**.
-3. Paste your API token. Leave **Allow creating and editing drafts** off unless you want
-   Claude to write to DaRUS (see below).
+3. Paste your API token (or leave it empty for published datasets only). Leave
+   **Allow creating and editing drafts** off unless you want Claude to write to DaRUS.
 
 You also need `git` installed (macOS: run `xcode-select --install`; Windows:
 [git-scm.com](https://git-scm.com)). Claude Desktop sets up everything else itself.
