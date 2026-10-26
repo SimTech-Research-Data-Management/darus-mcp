@@ -15,7 +15,7 @@ Why this exists instead of `fastmcp install`:
   - no `--with`       -> ~2s warm start instead of ~48s
 
 Usage:
-    uv run python install_claude.py --token <darus-api-token> [--dry-run]
+    uv run python install_claude.py --token <darus-api-token> [--allow-write] [--dry-run]
 """
 
 from __future__ import annotations
@@ -54,12 +54,15 @@ def find_uv() -> str:
     return uv
 
 
-def build_entry(uv_bin: str, token: str) -> dict:
+def build_entry(uv_bin: str, token: str, allow_write: bool = False) -> dict:
     main_py = REPO / "main.py"
+    env = {"API_TOKEN": token}
+    if allow_write:
+        env["ALLOW_WRITE"] = "1"
     return {
         "command": uv_bin,
         "args": ["run", "--project", str(REPO), "fastmcp", "run", str(main_py)],
-        "env": {"API_TOKEN": token},
+        "env": env,
     }
 
 
@@ -96,6 +99,11 @@ def write_config(cfg_path: Path, name: str, entry: dict) -> dict:
 def main() -> None:
     parser = argparse.ArgumentParser(description="Install the DaRUS MCP server into Claude Desktop.")
     parser.add_argument("--token", required=True, help="DaRUS API token")
+    parser.add_argument(
+        "--allow-write",
+        action="store_true",
+        help="Also expose the draft write tools (create/edit drafts; never publish). Default: read-only.",
+    )
     parser.add_argument("--dry-run", action="store_true", help="Print what would be written and exit.")
     args = parser.parse_args()
     if not args.token.strip():
@@ -103,12 +111,12 @@ def main() -> None:
 
     uv_bin = find_uv()
     cfg_path = claude_desktop_config_path()
-    entry = build_entry(uv_bin, args.token)
+    entry = build_entry(uv_bin, args.token, args.allow_write)
 
     if args.dry_run:
         print(f"Config path: {cfg_path}")
         print(f"Server '{SERVER_NAME}':")
-        print(json.dumps({**entry, "env": {"API_TOKEN": "<redacted>"}}, indent=2))
+        print(json.dumps({**entry, "env": {**entry["env"], "API_TOKEN": "<redacted>"}}, indent=2))
         return
 
     # Pre-sync so the very first Desktop launch is already fast (env built ahead of time).

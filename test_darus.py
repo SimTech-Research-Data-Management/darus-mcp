@@ -21,6 +21,10 @@ from pathlib import Path
 
 HERE = Path(__file__).parent
 
+# The in-process tests below cover the write tools; the read-only default is
+# checked in a subprocess (test_read_only_by_default).
+os.environ["ALLOW_WRITE"] = "1"
+
 
 def test_serves_tools_over_mcp():
     """Import must succeed with no API_TOKEN, and the server must actually serve
@@ -320,6 +324,55 @@ def test_base_url_cannot_redirect_a_call():
     print("[ok] base_url cannot redirect a call")
 
 
+def test_read_only_by_default():
+    """Without ALLOW_WRITE the write tools are not served at all (16 -> 13)."""
+    script = """
+import asyncio, json, main
+from fastmcp import Client
+
+async def go():
+    async with Client(main.app) as c:
+        print(json.dumps(sorted(t.name for t in await c.list_tools())))
+
+asyncio.run(go())
+"""
+    env = {k: v for k, v in os.environ.items() if k not in ("ALLOW_WRITE", "API_TOKEN", "MCP_TOOLS")}
+    proc = subprocess.run(
+        [sys.executable, "-c", script],
+        cwd=HERE,
+        env=env,
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert proc.returncode == 0, proc.stderr
+    names = json.loads(proc.stdout.strip().splitlines()[-1])
+    writes = {"Create_Dataset", "Edit_Dataset_Metadata", "Edit_Dataset_Fields"}
+    assert not writes & set(names), f"write tools served by default: {writes & set(names)}"
+    assert len(names) == 13, f"expected 13 read tools, got {len(names)}"
+    print("[ok] read-only by default: 13 tools, no write tools")
+
+
+def test_mcpb_manifest_matches_project():
+    """The .mcpb manifest must carry the release version and launch the same way
+    as the plugin, with the token and write toggle wired from user_config."""
+    import tomllib  # noqa: PLC0415
+
+    manifest = json.loads((HERE / "manifest.json").read_text())
+    project = tomllib.loads((HERE / "pyproject.toml").read_text())["project"]
+    assert manifest["version"] == project["version"], "bump manifest.json with pyproject"
+    plugin = json.loads((HERE / "plugins/darus-review/.claude-plugin/plugin.json").read_text())
+    assert plugin["version"] == project["version"], "bump plugin.json with pyproject"
+    cfg = manifest["server"]["mcp_config"]
+    assert cfg["args"][-3:] == ["fastmcp", "run", "main.py"]
+    assert cfg["env"] == {
+        "API_TOKEN": "${user_config.api_token}",
+        "ALLOW_WRITE": "${user_config.allow_write}",
+    }
+    assert manifest["user_config"]["allow_write"]["default"] is False, "read-only by default"
+    print("[ok] mcpb manifest matches project")
+
+
 def test_install_entry_shape():
     """The generated Claude Desktop entry uses an absolute uv path and the fast,
     self-healing launch command (no --with, no --no-sync)."""
@@ -331,7 +384,9 @@ def test_install_entry_shape():
     assert entry["args"][-3:] == ["fastmcp", "run", str(ic.REPO / "main.py")]
     assert "--with" not in entry["args"], "the --with overlay is what made startup ~48s"
     assert "--no-sync" not in entry["args"], "keep self-healing sync on"
-    assert entry["env"] == {"API_TOKEN": "my-token"}
+    assert entry["env"] == {"API_TOKEN": "my-token"}, "read-only unless --allow-write"
+    write_entry = ic.build_entry("/abs/path/to/uv", "my-token", allow_write=True)
+    assert write_entry["env"] == {"API_TOKEN": "my-token", "ALLOW_WRITE": "1"}
     print("[ok] install entry shape")
 
 
@@ -416,9 +471,11 @@ if __name__ == "__main__":
     test_run_without_token_fails_loud()
     test_dataverse_url_keeps_path_prefix()
     test_mcp_tools_allowlist()
+    test_read_only_by_default()
     test_no_tool_takes_base_url()
     test_review_tool_arguments()
     test_base_url_cannot_redirect_a_call()
+    test_mcpb_manifest_matches_project()
     test_install_entry_shape()
     test_install_merge_preserves_other_servers()
     test_install_config_path_per_os()
