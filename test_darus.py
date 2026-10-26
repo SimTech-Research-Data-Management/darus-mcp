@@ -21,10 +21,20 @@ from pathlib import Path
 
 HERE = Path(__file__).parent
 
-# The in-process tests below cover the write tools; the read-only default is
-# checked in a subprocess (test_read_only_by_default).
-os.environ["ALLOW_WRITE"] = "1"
-
+READ_TOOLS = {
+    "Dataverse_Metrics",
+    "Get_Collection_Metadata",
+    "Get_Dataset_Metadata",
+    "Get_Tabular_File_Schema",
+    "Knowledge_Graph_Summary",
+    "List_Content_of_Collection",
+    "List_Files_in_Dataset",
+    "Query_Knowledge_Graph",
+    "Read_File_Content",
+    "Read_Tabular_File",
+    "Search_DataCite",
+    "Search_Dataverse",
+}
 
 def test_serves_tools_over_mcp():
     """Import must succeed with no API_TOKEN, and the server must actually serve
@@ -39,90 +49,21 @@ def test_serves_tools_over_mcp():
         async with Client(main.app) as client:
             return await client.list_tools()
 
-    tools = asyncio.run(list_tools())
-    names = {t.name for t in tools}
-    assert len(tools) == 16, f"expected 16 tools served, got {len(tools)}"
-    assert "Create_Dataset" in names, "Create_Dataset write tool not served"
-    assert "Edit_Dataset_Metadata" in names, "Edit_Dataset_Metadata tool not served"
-    assert "Edit_Dataset_Fields" in names, "Edit_Dataset_Fields generic tool not served"
-    assert "Search_Vocabulary" in names, "Search_Vocabulary tool not served"
-    print(f"[ok] import clean, {len(tools)} tools served over MCP")
+    names = {t.name for t in asyncio.run(list_tools())}
+    # Exactly the read tools: a new tool from pyDataverse (a write tool above all)
+    # must fail here until a human has checked it.
+    assert names == READ_TOOLS, (
+        f"served tools changed: added {names - READ_TOOLS}, gone {READ_TOOLS - names}"
+    )
+    print(f"[ok] import clean, {len(names)} read-only tools served over MCP")
 
 
-def test_create_dataset_tool_schema():
-    """The write tool must be exposed with its required citation fields, so a
-    client knows what to supply. Registration needs no token (execution does)."""
-    os.environ.pop("API_TOKEN", None)
-    from fastmcp import Client  # noqa: PLC0415
-
-    import main  # noqa: PLC0415
-
-    async def get_schema():
-        async with Client(main.app) as client:
-            tool = next(t for t in await client.list_tools() if t.name == "Create_Dataset")
-            return tool.inputSchema
-
-    schema = asyncio.run(get_schema())
-    required = set(schema.get("required", []))
-    expected = {"title", "description", "authors", "contacts", "subjects", "collection"}
-    assert expected <= required, f"missing required params: {expected - required}"
-    print("[ok] Create_Dataset exposes required citation fields")
 
 
-def test_edit_dataset_tool_schema():
-    """Edit tool requires only `identifier`; citation fields are optional upserts."""
-    os.environ.pop("API_TOKEN", None)
-    from fastmcp import Client  # noqa: PLC0415
-
-    import main  # noqa: PLC0415
-
-    async def get_schema():
-        async with Client(main.app) as client:
-            tool = next(
-                t for t in await client.list_tools() if t.name == "Edit_Dataset_Metadata"
-            )
-            return tool.inputSchema
-
-    schema = asyncio.run(get_schema())
-    required = set(schema.get("required", []))
-    props = set(schema.get("properties", {}))
-    assert "identifier" in required, "identifier must be required"
-    assert required == {"identifier"}, f"only identifier should be required, got {required}"
-    assert {"authors", "contacts", "subjects"} <= props, "citation upsert fields missing"
-    print("[ok] Edit_Dataset_Metadata requires only identifier")
 
 
-def test_server_instructions_describe_write_workflow():
-    """Model-facing server instructions must frame create+enrich and the no-publish
-    rule, so the model can sequence the tools without a user-invoked prompt."""
-    os.environ.pop("API_TOKEN", None)
-    import main  # noqa: PLC0415
-
-    instr = main.app.instructions or ""
-    assert "Create_Dataset" in instr and "Edit_Dataset_Metadata" in instr
-    assert "COMPLETE" in instr, "must state the resend-full-list rule"
-    assert "Never publish" in instr, "must state draft-only / no-publish"
-    print("[ok] server instructions describe create+enrich workflow")
 
 
-def test_vocabulary_sources_configured():
-    """The app configures its own vocab sources (incl. TIB); the tool advertises them."""
-    os.environ.pop("API_TOKEN", None)
-    from fastmcp import Client  # noqa: PLC0415
-
-    import main  # noqa: PLC0415
-
-    async def get_desc():
-        async with Client(main.app) as client:
-            tool = next(
-                t for t in await client.list_tools() if t.name == "Search_Vocabulary"
-            )
-            return tool.description
-
-    desc = asyncio.run(get_desc())
-    for name in ("Wikidata", "TIB", "EBI OLS"):
-        assert name in desc, f"configured source {name!r} not advertised in tool description"
-    print("[ok] vocabulary sources configured + advertised (Wikidata, TIB, EBI OLS)")
 
 
 def test_run_without_token_fails_loud():
@@ -192,7 +133,7 @@ REVIEW_TOOLS = [
 
 
 def test_mcp_tools_allowlist():
-    """With MCP_TOOLS set, exactly those tools are served (16 -> 5) and a hidden
+    """With MCP_TOOLS set, exactly those tools are served (12 -> 5) and a hidden
     tool fails as unknown rather than running. Runs in a subprocess because
     `main` is already imported above with every tool enabled."""
     script = """
@@ -203,7 +144,7 @@ async def go():
     async with Client(main.app) as c:
         names = sorted(t.name for t in await c.list_tools())
         try:
-            await c.call_tool("Create_Dataset", {})
+            await c.call_tool("Search_Dataverse", {"query": "x"})
             hidden = "ran"
         except Exception as e:
             hidden = str(e)
@@ -226,7 +167,7 @@ asyncio.run(go())
     out = json.loads(proc.stdout.strip().splitlines()[-1])
     assert out["names"] == sorted(REVIEW_TOOLS), f"served: {out['names']}"
     assert "Unknown tool" in out["hidden"], f"hidden tool not refused: {out['hidden']}"
-    print(f"[ok] MCP_TOOLS allowlist: 16 -> {len(out['names'])}, hidden tool unknown")
+    print(f"[ok] MCP_TOOLS allowlist: 12 -> {len(out['names'])}, hidden tool unknown")
 
 
 def test_no_tool_takes_base_url():
@@ -243,7 +184,7 @@ def test_no_tool_takes_base_url():
 
     served = asyncio.run(schemas())
     tools = {n: t.inputSchema for n, t in served.items()}
-    assert len(tools) == 16, f"hiding an argument must not drop tools, got {len(tools)}"
+    assert set(tools) == READ_TOOLS, f"hiding an argument must not drop tools: {sorted(tools)}"
     leaky = [n for n, s in tools.items() if "base_url" in s.get("properties", {})]
     assert not leaky, f"tools still take base_url: {leaky}"
     told = [n for n, t in served.items() if "base_url" in (t.description or "")]
@@ -324,46 +265,11 @@ def test_base_url_cannot_redirect_a_call():
     print("[ok] base_url cannot redirect a call")
 
 
-def test_read_only_by_default():
-    """Without ALLOW_WRITE the write tools are not served at all (16 -> 13), even
-    when an MCP_TOOLS allowlist names them."""
-    script = """
-import asyncio, json, main
-from fastmcp import Client
-
-async def go():
-    async with Client(main.app) as c:
-        print(json.dumps(sorted(t.name for t in await c.list_tools())))
-
-asyncio.run(go())
-"""
-    env = {k: v for k, v in os.environ.items() if k not in ("ALLOW_WRITE", "API_TOKEN", "MCP_TOOLS")}
-    writes = {"Create_Dataset", "Edit_Dataset_Metadata", "Edit_Dataset_Fields"}
-
-    def served(extra):
-        proc = subprocess.run(
-            [sys.executable, "-c", script],
-            cwd=HERE,
-            env={**env, **extra},
-            capture_output=True,
-            text=True,
-            timeout=60,
-        )
-        assert proc.returncode == 0, proc.stderr
-        return set(json.loads(proc.stdout.strip().splitlines()[-1]))
-
-    names = served({})
-    assert not writes & names, f"write tools served by default: {writes & names}"
-    assert len(names) == 13, f"expected 13 read tools, got {len(names)}"
-
-    names = served({"MCP_TOOLS": ",".join([*writes, "Search_Dataverse"])})
-    assert names == {"Search_Dataverse"}, f"allowlist bypassed read-only: {names}"
-    print("[ok] read-only by default: 13 tools, no write tools, allowlist can't add them")
 
 
 def test_mcpb_manifest_matches_project():
     """The .mcpb manifest must carry the release version and launch the same way
-    as the plugin, with the token and write toggle wired from user_config."""
+    as the plugin, with the token wired from user_config and no write toggle."""
     import tomllib  # noqa: PLC0415
 
     manifest = json.loads((HERE / "manifest.json").read_text())
@@ -373,11 +279,8 @@ def test_mcpb_manifest_matches_project():
     assert plugin["version"] == project["version"], "bump plugin.json with pyproject"
     cfg = manifest["server"]["mcp_config"]
     assert cfg["args"][-3:] == ["fastmcp", "run", "main.py"]
-    assert cfg["env"] == {
-        "API_TOKEN": "${user_config.api_token}",
-        "ALLOW_WRITE": "${user_config.allow_write}",
-    }
-    assert manifest["user_config"]["allow_write"]["default"] is False, "read-only by default"
+    assert cfg["env"] == {"API_TOKEN": "${user_config.api_token}"}
+    assert set(manifest["user_config"]) == {"api_token"}, "read-only: no write toggle"
     print("[ok] mcpb manifest matches project")
 
 
@@ -392,9 +295,7 @@ def test_install_entry_shape():
     assert entry["args"][-3:] == ["fastmcp", "run", str(ic.REPO / "main.py")]
     assert "--with" not in entry["args"], "the --with overlay is what made startup ~48s"
     assert "--no-sync" not in entry["args"], "keep self-healing sync on"
-    assert entry["env"] == {"API_TOKEN": "my-token"}, "read-only unless --allow-write"
-    write_entry = ic.build_entry("/abs/path/to/uv", "my-token", allow_write=True)
-    assert write_entry["env"] == {"API_TOKEN": "my-token", "ALLOW_WRITE": "1"}
+    assert entry["env"] == {"API_TOKEN": "my-token"}
     print("[ok] install entry shape")
 
 
@@ -472,14 +373,9 @@ def test_install_writes_and_merges_on_disk():
 
 if __name__ == "__main__":
     test_serves_tools_over_mcp()
-    test_create_dataset_tool_schema()
-    test_edit_dataset_tool_schema()
-    test_server_instructions_describe_write_workflow()
-    test_vocabulary_sources_configured()
     test_run_without_token_fails_loud()
     test_dataverse_url_keeps_path_prefix()
     test_mcp_tools_allowlist()
-    test_read_only_by_default()
     test_no_tool_takes_base_url()
     test_review_tool_arguments()
     test_base_url_cannot_redirect_a_call()

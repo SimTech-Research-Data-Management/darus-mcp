@@ -26,8 +26,7 @@
         "main.py"
       ],
       "env": {
-        "API_TOKEN": "${user_config.api_token}",
-        "ALLOW_WRITE": "${user_config.allow_write}"
+        "API_TOKEN": "${user_config.api_token}"
       }
     }
   },
@@ -38,12 +37,6 @@
       "description": "Optional. Without it Claude sees only published datasets. In DaRUS, open the menu under your name and choose API Token.",
       "sensitive": true,
       "required": false
-    },
-    "allow_write": {
-      "type": "boolean",
-      "title": "Allow creating and editing drafts",
-      "description": "Lets Claude create draft datasets and edit their metadata. Claude never publishes; you publish drafts yourself in DaRUS. Leave this off for read-only access.",
-      "default": false
     }
   },
   "compatibility": {
