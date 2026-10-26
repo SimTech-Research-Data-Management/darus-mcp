@@ -1,6 +1,6 @@
 name: Release bundle
 
-# Attaches darus-mcp-<version>.mcpb (Claude Desktop one-click install) to each published release.
+# Attaches darus-mcp.mcpb (Claude Desktop one-click install) to each published release.
 on:
   release:
     types: [published]
@@ -13,6 +13,25 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+
+      # A bundle whose version lags the tag is not seen as an update by Claude Desktop.
+      - name: Versions match the tag
+        run: |
+          tag="${{ github.event.release.tag_name }}"
+          expected="${tag#v}"
+          for f in manifest.json plugins/darus-review/.claude-plugin/plugin.json; do
+            got=$(python3 -c "import json,sys;print(json.load(open(sys.argv[1]))['version'])" "$f")
+            [ "$got" = "$expected" ] || { echo "::error file=$f::version $got != release tag $expected"; exit 1; }
+          done
+          got=$(python3 -c "import tomllib;print(tomllib.load(open('pyproject.toml','rb'))['project']['version'])")
+          [ "$got" = "$expected" ] || { echo "::error file=pyproject.toml::version $got != release tag $expected"; exit 1; }
+
+      - uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+        with:
+          python-version: "3.12"
+      - run: uv sync --locked
+      - run: uv run python test_darus.py
+
       - run: npx -y @anthropic-ai/mcpb@2.1.2 pack . darus-mcp.mcpb
       - run: gh release upload "${{ github.event.release.tag_name }}" darus-mcp.mcpb --clobber
         env:

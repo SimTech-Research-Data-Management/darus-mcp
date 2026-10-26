@@ -43,8 +43,14 @@ jobs:
         run: uv run python test_darus.py
 
   mcpb:
-    name: validate .mcpb manifest
+    name: build .mcpb bundle
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
       - run: npx -y @anthropic-ai/mcpb@2.1.2 validate manifest.json
+      # Pack here too, so a broken bundle fails a PR instead of a published release.
+      - run: npx -y @anthropic-ai/mcpb@2.1.2 pack . darus-mcp.mcpb
+      - uses: actions/upload-artifact@v4
+        with:
+          name: darus-mcp.mcpb
+          path: darus-mcp.mcpb
