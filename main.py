@@ -28,17 +28,13 @@ Dependencies:
 
 import os
 import tomllib
-from collections.abc import Sequence
 from pathlib import Path
 
 from dotenv import load_dotenv
 from fastmcp import FastMCP
-from fastmcp.server.transforms import GetToolNext, Transform
-from fastmcp.tools import Tool
 from fastmcp.tools.tool_transform import ArgTransformConfig, ToolTransformConfig
-from fastmcp.utilities.versions import VersionSpec
 from pyDataverse import Dataverse
-from pyDataverse.mcp import DataverseMCP, MCPConfiguration, VocabularySource
+from pyDataverse.mcp import DataverseMCP
 
 load_dotenv()
 
@@ -63,77 +59,51 @@ _version = tomllib.loads((Path(__file__).parent / "pyproject.toml").read_text())
 ]["version"]
 app = FastMCP(name="darus-mcp", version=_version)
 
-# Read-only by default; ALLOW_WRITE=1 adds the draft write tools (they also need API_TOKEN).
-allow_write = os.environ.get("ALLOW_WRITE", "").strip().lower() in {"1", "true", "yes"}
+# Register Dataverse MCP tools with the application. pyDataverse's default
+# configuration is read-only: no tool creates, edits or publishes anything.
+# The draft write tools live on the `write-tools` branch.
+DataverseMCP(dataverse=darus).to_mcp(app)
 
-# Optional tool allowlist, e.g. for a read-only review agent. Unset = all tools.
-# Hidden tools are not listed, and calling one fails as "Unknown tool".
-# Applied before the tools are registered: the disables pyDataverse issues for
-# write tools (read-only mode) then come later and win over this allowlist.
-if tools := os.environ.get("MCP_TOOLS"):
-    app.enable(names={name.strip() for name in tools.split(",")}, only=True)
+# pyDataverse puts a per-call `base_url` argument on its tools. With it, any caller
+# (a prompt-injected model included) could point a tool at a host of its choosing
+# and carry data out in that request's URL. This server is bound to one instance,
+# DATAVERSE_URL; hidden, the argument always takes its default, None, which means
+# exactly that instance.
+_hide_base_url = {"base_url": ArgTransformConfig(hide=True)}
 
-# Register Dataverse MCP tools with the application.
-# vocabulary_sources are DaRUS's choice of term services (kept out of generic pyDataverse):
-# Wikidata for general terms, plus the TIB Terminology Service for engineering/chemistry
-# ontologies (NFDI4Ing/NFDI4Chem), plus the EBI OLS for life sciences.
-DataverseMCP(
-    dataverse=darus,
-    config=MCPConfiguration(
-        dataset=["read", "create", "edit"] if allow_write else ["read"],
-        vocabulary_sources=[
-            VocabularySource(name="Wikidata", type="wikidata"),
-            VocabularySource(
-                name="TIB", type="ols", base_url="https://api.terminology.tib.eu"
+# pyDataverse's `base_url_instructions` ends every description with this exact
+# sentence (even on tools without the argument). Removed verbatim, so any other
+# mention of base_url stays visible and fails test_no_tool_takes_base_url.
+_base_url_sentence = (
+    " Provide the `base_url` parameter if you want to use a different dataverse."
+)
+
+# Optional tool allowlist, e.g. for a narrower review agent. Unset = all tools.
+# Left-out tools are removed, so they are not listed and calling one fails as
+# "Unknown tool".
+allowlist = os.environ.get("MCP_TOOLS")
+keep = {name.strip() for name in allowlist.split(",")} if allowlist else None
+
+# shortcut: reads fastmcp 2's private tool registry, because `fastmcp run` imports
+# this module inside its event loop, where the async get_tools() can't be awaited.
+# Replace with the v3 Transform API (see the `write-tools` branch) once pyDataverse
+# allows fastmcp 3.
+for name, tool in list(app._tool_manager._tools.items()):
+    if keep is not None and name not in keep:
+        app.remove_tool(name)
+        continue
+    takes_base_url = "base_url" in tool.parameters.get("properties", {})
+    told = bool(tool.description) and "base_url" in tool.description
+    if takes_base_url or told:
+        app.add_tool_transformation(
+            name,
+            ToolTransformConfig(
+                arguments=_hide_base_url if takes_base_url else {},
+                description=tool.description.replace(_base_url_sentence, "").rstrip()
+                if told
+                else None,
             ),
-            VocabularySource(
-                name="EBI OLS", type="ols", base_url="https://www.ebi.ac.uk/ols4"
-            ),
-        ],
-    ),
-).to_mcp(app)
-
-
-class HideBaseUrl(Transform):
-    """Remove the per-call `base_url` argument pyDataverse puts on its tools.
-
-    With it, any caller (a prompt-injected model included) could point a tool at a
-    host of its choosing and carry data out in that request's URL. This server is
-    bound to one instance, DATAVERSE_URL; hidden, the argument always takes its
-    default, None, which means exactly that instance.
-    """
-
-    _hide = ToolTransformConfig(arguments={"base_url": ArgTransformConfig(hide=True)})
-
-    # pyDataverse's `base_url_instructions` ends every description with this exact
-    # sentence (even on tools without the argument). Removed verbatim, so any other
-    # mention of base_url stays visible and fails test_no_tool_takes_base_url.
-    _sentence = (
-        " Provide the `base_url` parameter if you want to use a different dataverse."
-    )
-
-    def _apply(self, tool: Tool) -> Tool:
-        if "base_url" in tool.parameters.get("properties", {}):
-            tool = self._hide.apply(tool)
-        if tool.description and "base_url" in tool.description:
-            tool = tool.model_copy(
-                update={
-                    "description": tool.description.replace(self._sentence, "").rstrip()
-                }
-            )
-        return tool
-
-    async def list_tools(self, tools: Sequence[Tool]) -> Sequence[Tool]:
-        return [self._apply(t) for t in tools]
-
-    async def get_tool(
-        self, name: str, call_next: GetToolNext, *, version: VersionSpec | None = None
-    ) -> Tool | None:
-        tool = await call_next(name, version=version)
-        return self._apply(tool) if tool is not None else None
-
-
-app.add_transform(HideBaseUrl())
+        )
 
 if __name__ == "__main__":
     """

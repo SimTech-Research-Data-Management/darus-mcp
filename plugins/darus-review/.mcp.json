@@ -11,8 +11,7 @@
         "${CLAUDE_PLUGIN_ROOT}/../../main.py"
       ],
       "env": {
-        "API_TOKEN": "${DARUS_API_TOKEN}",
-        "ALLOW_WRITE": "${DARUS_ALLOW_WRITE:-}"
+        "API_TOKEN": "${DARUS_API_TOKEN}"
       }
     }
   }
