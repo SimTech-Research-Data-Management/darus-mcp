@@ -63,15 +63,17 @@ _version = tomllib.loads((Path(__file__).parent / "pyproject.toml").read_text())
 ]["version"]
 app = FastMCP(name="darus-mcp", version=_version)
 
+# Read-only by default; ALLOW_WRITE=1 adds the draft write tools (they also need API_TOKEN).
+allow_write = os.environ.get("ALLOW_WRITE", "").strip().lower() in {"1", "true", "yes"}
+
 # Register Dataverse MCP tools with the application.
-# dataset=["read", "create", "edit"] opts in to the draft write tools (needs API_TOKEN).
 # vocabulary_sources are DaRUS's choice of term services (kept out of generic pyDataverse):
 # Wikidata for general terms, plus the TIB Terminology Service for engineering/chemistry
 # ontologies (NFDI4Ing/NFDI4Chem), plus the EBI OLS for life sciences.
 DataverseMCP(
     dataverse=darus,
     config=MCPConfiguration(
-        dataset=["read", "create", "edit"],
+        dataset=["read", "create", "edit"] if allow_write else ["read"],
         vocabulary_sources=[
             VocabularySource(name="Wikidata", type="wikidata"),
             VocabularySource(
