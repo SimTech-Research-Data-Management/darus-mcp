@@ -1,4 +1,4 @@
-# DaRUS Review MCP
+# DaRUS MCP
 
 Connects Claude to [DaRUS](https://darus.uni-stuttgart.de), the University of Stuttgart's
 research data repository. Claude can then search and review datasets for you. It is read-only: it never creates,
@@ -14,7 +14,7 @@ Only reviewing published datasets? You can skip this and leave the token empty.
 
 ### 2a. Claude Desktop
 
-1. Download [`darus-mcp.mcpb`](https://github.com/SimTech-Research-Data-Management/darus-review-mcp/releases/latest/download/darus-mcp.mcpb).
+1. Download [`darus-mcp.mcpb`](https://github.com/SimTech-Research-Data-Management/darus-mcp/releases/latest/download/darus-mcp.mcpb).
 2. Double-click it (or drag it into Claude Desktop) and click **Install**.
 3. Paste your API token (or leave it empty for published datasets only).
 
@@ -34,7 +34,7 @@ export DARUS_API_TOKEN="<your-darus-api-token>"
 Then in Claude Code:
 
 ```
-/plugin marketplace add SimTech-Research-Data-Management/darus-review-mcp
+/plugin marketplace add SimTech-Research-Data-Management/darus-mcp
 /plugin install darus-review@darus
 ```
 
@@ -69,7 +69,7 @@ triaging many records before a manual expert review.
 `Query_Knowledge_Graph`, `Dataverse_Metrics`. All read-only.
 
 Creating and editing draft datasets, and controlled-vocabulary lookup, are kept on the
-[`write-tools`](https://github.com/SimTech-Research-Data-Management/darus-review-mcp/tree/write-tools)
+[`write-tools`](https://github.com/SimTech-Research-Data-Management/darus-mcp/tree/write-tools)
 branch. They need a patched pyDataverse, so they are not part of the released server.
 
 ## For developers
