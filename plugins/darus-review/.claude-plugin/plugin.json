@@ -1,10 +1,10 @@
 {
   "name": "darus-review",
   "displayName": "DaRUS Dataset Review",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Review DaRUS/Dataverse research datasets for quality, FAIR compliance, and metadata consistency. Bundles the review skill together with the darus-mcp server that provides live repository access.",
   "author": {
     "name": "SimTech Research Data Management"
   },
-  "repository": "https://github.com/SimTech-Research-Data-Management/darus-review-mcp"
+  "repository": "https://github.com/SimTech-Research-Data-Management/darus-mcp"
 }

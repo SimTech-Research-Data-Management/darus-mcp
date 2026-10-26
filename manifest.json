@@ -2,7 +2,7 @@
   "manifest_version": "0.4",
   "name": "darus-mcp",
   "display_name": "DaRUS",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Search, inspect and review DaRUS (University of Stuttgart Dataverse) datasets; optionally create and edit drafts.",
   "author": {
     "name": "SimTech Research Data Management"
@@ -10,7 +10,7 @@
   "icon": "icon.png",
   "repository": {
     "type": "git",
-    "url": "https://github.com/SimTech-Research-Data-Management/darus-review-mcp"
+    "url": "https://github.com/SimTech-Research-Data-Management/darus-mcp"
   },
   "server": {
     "type": "uv",
