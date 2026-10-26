@@ -1,0 +1,19 @@
+name: Release bundle
+
+# Attaches darus-mcp-<version>.mcpb (Claude Desktop one-click install) to each published release.
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  mcpb:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - run: npx -y @anthropic-ai/mcpb@2.1.2 pack . darus-mcp.mcpb
+      - run: gh release upload "${{ github.event.release.tag_name }}" darus-mcp.mcpb --clobber
+        env:
+          GH_TOKEN: ${{ github.token }}

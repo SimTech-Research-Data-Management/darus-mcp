@@ -1,0 +1,16 @@
+.git/
+.github/
+.venv/
+__pycache__/
+*.pyc
+.env
+.DS_Store
+*.mcpb
+docs/
+plugins/
+test_darus.py
+install_claude.py
+install-claude.sh
+.claude/
+.claude-plugin/
+.ruff_cache/

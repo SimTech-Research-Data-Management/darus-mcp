@@ -41,3 +41,10 @@ jobs:
 
       - name: Tests
         run: uv run python test_darus.py
+
+  mcpb:
+    name: validate .mcpb manifest
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - run: npx -y @anthropic-ai/mcpb@2.1.2 validate manifest.json
