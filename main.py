@@ -66,6 +66,13 @@ app = FastMCP(name="darus-mcp", version=_version)
 # Read-only by default; ALLOW_WRITE=1 adds the draft write tools (they also need API_TOKEN).
 allow_write = os.environ.get("ALLOW_WRITE", "").strip().lower() in {"1", "true", "yes"}
 
+# Optional tool allowlist, e.g. for a read-only review agent. Unset = all tools.
+# Hidden tools are not listed, and calling one fails as "Unknown tool".
+# Applied before the tools are registered: the disables pyDataverse issues for
+# write tools (read-only mode) then come later and win over this allowlist.
+if tools := os.environ.get("MCP_TOOLS"):
+    app.enable(names={name.strip() for name in tools.split(",")}, only=True)
+
 # Register Dataverse MCP tools with the application.
 # vocabulary_sources are DaRUS's choice of term services (kept out of generic pyDataverse):
 # Wikidata for general terms, plus the TIB Terminology Service for engineering/chemistry
@@ -127,11 +134,6 @@ class HideBaseUrl(Transform):
 
 
 app.add_transform(HideBaseUrl())
-
-# Optional tool allowlist, e.g. for a read-only review agent. Unset = all tools.
-# Hidden tools are not listed, and calling one fails as "Unknown tool".
-if tools := os.environ.get("MCP_TOOLS"):
-    app.enable(names={name.strip() for name in tools.split(",")}, only=True)
 
 if __name__ == "__main__":
     """

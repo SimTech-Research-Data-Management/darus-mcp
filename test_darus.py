@@ -325,7 +325,8 @@ def test_base_url_cannot_redirect_a_call():
 
 
 def test_read_only_by_default():
-    """Without ALLOW_WRITE the write tools are not served at all (16 -> 13)."""
+    """Without ALLOW_WRITE the write tools are not served at all (16 -> 13), even
+    when an MCP_TOOLS allowlist names them."""
     script = """
 import asyncio, json, main
 from fastmcp import Client
@@ -337,20 +338,27 @@ async def go():
 asyncio.run(go())
 """
     env = {k: v for k, v in os.environ.items() if k not in ("ALLOW_WRITE", "API_TOKEN", "MCP_TOOLS")}
-    proc = subprocess.run(
-        [sys.executable, "-c", script],
-        cwd=HERE,
-        env=env,
-        capture_output=True,
-        text=True,
-        timeout=60,
-    )
-    assert proc.returncode == 0, proc.stderr
-    names = json.loads(proc.stdout.strip().splitlines()[-1])
     writes = {"Create_Dataset", "Edit_Dataset_Metadata", "Edit_Dataset_Fields"}
-    assert not writes & set(names), f"write tools served by default: {writes & set(names)}"
+
+    def served(extra):
+        proc = subprocess.run(
+            [sys.executable, "-c", script],
+            cwd=HERE,
+            env={**env, **extra},
+            capture_output=True,
+            text=True,
+            timeout=60,
+        )
+        assert proc.returncode == 0, proc.stderr
+        return set(json.loads(proc.stdout.strip().splitlines()[-1]))
+
+    names = served({})
+    assert not writes & names, f"write tools served by default: {writes & names}"
     assert len(names) == 13, f"expected 13 read tools, got {len(names)}"
-    print("[ok] read-only by default: 13 tools, no write tools")
+
+    names = served({"MCP_TOOLS": ",".join([*writes, "Search_Dataverse"])})
+    assert names == {"Search_Dataverse"}, f"allowlist bypassed read-only: {names}"
+    print("[ok] read-only by default: 13 tools, no write tools, allowlist can't add them")
 
 
 def test_mcpb_manifest_matches_project():
