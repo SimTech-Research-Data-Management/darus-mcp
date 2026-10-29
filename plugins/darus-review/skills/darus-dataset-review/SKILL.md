@@ -72,8 +72,8 @@ One report, complete on its own: researchers may read it once on a web page
 with no chance to ask back. **Required and recommended changes together: at most
 ~150 words**, one example per line, not a list ("Not reviewed" doesn't count toward
 it). Plain and factual: no praise, no softening ("great work, just a
-few things"), no list of what passed, no section for what is good: "Ready to submit" is the
-positive feedback.
+few things"). What the deposit already does well goes first, under "Already in place":
+facts, not compliments, so the researcher sees what to keep.
 
 **Write for the researcher, not for a curator.** Name places the way the DaRUS edit
 form shows them ("License, Terms tab", "Description", "Author identifier"), never
@@ -87,9 +87,12 @@ column names and values go in backticks; they are the researcher's own words.
 
 **Ready to submit:** nothing blocks reuse.
   or
-**Changes needed:** <n> required change(s) before others can reuse this.
+**<n> mandatory change(s) needed**
 
-## Required changes
+## Already in place
+- <what is there>: <form field, file or column>
+
+## Mandatory changes
 - <problem>: <form field, file or column>. <the fix>
 
 ## Recommended changes
@@ -101,13 +104,17 @@ column names and values go in backticks; they are the researcher's own words.
 
 - **The verdict line is fixed wording**, exactly one of the two lines above. Never a
   justification: the lists say why.
-- **Ready to submit** when no section-1 criterion is violated; otherwise **Changes needed**
-  with the number of required changes.
-- **Required changes:** every section-1 violation, most severe first. Omit the heading if there are none.
+- **Ready to submit** when no section-1 criterion is violated; otherwise the
+  number of mandatory changes, nothing else on the line.
+- **Already in place:** 2 to 4 things the deposit gets right that matter for reuse, each
+  grounded like a change ("License, Terms tab: CC BY 4.0", "`csv_files/`: one file per
+  figure panel, named after it"). Only what you checked; never a criterion you could not
+  review. Does not count toward the ~150 words. Omit if nothing qualifies.
+- **Mandatory changes:** every section-1 violation, most severe first. Omit the heading if there are none.
 - **Recommended changes:** at most 3 section-2 items, the ones that matter most for reuse. Omit if none.
 - **Not reviewed:** one line per file a tool couldn't read when a criterion needs it
   (section 4), e.g. "`a.txt`: restricted by you". Omit if none.
-- The three `##` headings above are the only headings, spelled exactly so. No criterion
+- The four `##` headings above are the only headings, spelled exactly so. No criterion
   numbers, no criteria section names, no follow-up offer. Never report what section 3
   excludes.
 
